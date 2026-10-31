@@ -1,1 +1,8 @@
-export default function DashboardPage() { return <h1 className="text-2xl font-semibold">Finance dashboard</h1>; }
+"use client";
+
+import React from "react";
+import { StaffWorkspace } from "@/components/Staff";
+
+export default function DashboardPage() {
+  return <StaffWorkspace />;
+}
