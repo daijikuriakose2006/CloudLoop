@@ -66,10 +66,10 @@ function AuthPageContent() {
 
   const getRoleRedirectPath = (role: RoleType): string => {
     switch (role) {
+      case "Admin":
+        return "/app/admin";
       case "Staff Account":
         return "/app/staff";
-      case "Admin":
-        return "/dashboard";
       case "Finance Lead":
         return "/dashboard";
       case "Customer":
