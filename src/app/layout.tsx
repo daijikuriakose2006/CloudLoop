@@ -7,10 +7,11 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "CloudLoop",
-    template: "%s | CloudLoop",
+    default: "Brightloop - Subscription Billing & Revenue Management",
+    template: "%s | Brightloop",
   },
-  description: "A minimal, production-ready Next.js full-stack starter template.",
+  description:
+    "Brightloop turns products and plans into recurring invoices, tracks payments and shows live revenue to admins, staff and customers, with access control enforced in the API and the database.",
 };
 
 export default function RootLayout({
@@ -19,8 +20,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en" className="dark scroll-smooth" suppressHydrationWarning>
+      <body
+        className={`${inter.className} bg-[#06080e] text-slate-100 min-h-screen antialiased selection:bg-cyan-500/30 selection:text-cyan-200`}
+      >
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
