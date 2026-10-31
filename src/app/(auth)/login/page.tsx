@@ -71,10 +71,10 @@ function AuthPageContent() {
       case "Staff Account":
         return "/app/staff";
       case "Finance Lead":
-        return "/dashboard";
+        return "/app/finance";
       case "Customer":
       default:
-        return "/dashboard";
+        return "/app/customer";
     }
   };
 
