@@ -102,9 +102,10 @@ function AuthPageContent() {
         return;
       }
 
-      setSuccessMessage(`Signed in as ${selectedRole}. Entering workspace...`);
+      const resolvedRole = data.user?.role || selectedRole;
+      setSuccessMessage(`Signed in as ${resolvedRole}. Entering workspace...`);
       setTimeout(() => {
-        router.push(getRoleRedirectPath(selectedRole));
+        router.push(data.redirectPath || getRoleRedirectPath(selectedRole));
       }, 600);
     } catch (err) {
       console.warn("Login request note:", err);
@@ -121,7 +122,7 @@ function AuthPageContent() {
     setLoading(true);
 
     try {
-      await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -130,11 +131,13 @@ function AuthPageContent() {
           role,
         }),
       });
+      const data = await res.json();
+      router.push(data.redirectPath || getRoleRedirectPath(role));
     } catch (err) {
       console.warn("Demo login note:", err);
+      router.push(getRoleRedirectPath(role));
     } finally {
       setLoading(false);
-      router.push(getRoleRedirectPath(role));
     }
   };
 

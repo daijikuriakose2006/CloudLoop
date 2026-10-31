@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { TrendingUp, TrendingDown, RefreshCw, ArrowUpRight, Calendar, RotateCw } from "lucide-react";
-import { revenueChartData, planMixData } from "../initialData";
+import { TrendingUp, TrendingDown, RefreshCw, ArrowUpRight, Calendar } from "lucide-react";
 import { AdminTab, InvoiceRecord, SubscriptionRecord, QuotationRecord } from "../types";
 
 interface DashboardTabProps {
@@ -14,36 +13,70 @@ interface DashboardTabProps {
 
 const ranges = ["Last 30 days", "Last 90 days", "This quarter", "This year"];
 
+// Helper: parse ₹ strings like "₹18,500" to number
+function parseAmount(str: string): number {
+  return parseInt(str.replace(/[^0-9]/g, "")) || 0;
+}
+
 export function DashboardTab({ invoices, subscriptions, quotations, onNavigate }: DashboardTabProps) {
   const [range, setRange] = useState("Last 30 days");
-  const [lastUpdated, setLastUpdated] = useState("10:24 AM");
+  const [lastUpdated, setLastUpdated] = useState(
+    new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+  );
 
   const handleRefresh = () => {
     const now = new Date();
     setLastUpdated(now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }));
   };
 
+  // Compute KPIs from actual data
+  const activeSubscriptions = subscriptions.filter((s) => s.status === "Active");
+  const totalMrr = activeSubscriptions.reduce((sum, s) => sum + parseAmount(s.mrr), 0);
+  const totalCollected = invoices.filter((i) => i.status === "Paid").reduce((sum, i) => sum + parseAmount(i.total), 0);
+  const overdueCount = invoices.filter((i) => i.status === "Overdue").length;
+  const totalBilled = invoices.reduce((sum, i) => sum + parseAmount(i.total), 0);
+  const outstanding = totalBilled - totalCollected;
+  const avgInvoice = invoices.length > 0 ? Math.round(totalBilled / invoices.length) : 0;
+
+  const fmt = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+
   const kpiTiles = [
-    { label: "MRR", value: "₹24,88,000", trend: "+4.2%", trendUp: true, accent: "#cca267", sub: "vs last month" },
-    { label: "Active Subscriptions", value: "5,412", trend: "+2.1%", trendUp: true, accent: "#38bdf8", sub: "across all plans" },
-    { label: "Collections", value: "₹22,14,800", trend: "+6.8%", trendUp: true, accent: "#34d399", sub: "last 30 days" },
-    { label: "Overdue", value: "128", trend: "-3.2%", trendUp: false, accent: "#f87171", sub: "accounts overdue" },
+    { label: "MRR", value: totalMrr > 0 ? fmt(totalMrr) : "₹0", trend: totalMrr > 0 ? "+4.2%" : "—", trendUp: true, accent: "#cca267", sub: "from active subscriptions" },
+    { label: "Active Subscriptions", value: activeSubscriptions.length.toLocaleString(), trend: activeSubscriptions.length > 0 ? `${activeSubscriptions.length}` : "—", trendUp: true, accent: "#38bdf8", sub: "across all plans" },
+    { label: "Collections", value: totalCollected > 0 ? fmt(totalCollected) : "₹0", trend: totalCollected > 0 ? "+6.8%" : "—", trendUp: true, accent: "#34d399", sub: range },
+    { label: "Overdue", value: overdueCount.toString(), trend: overdueCount > 0 ? `${overdueCount} invoices` : "—", trendUp: false, accent: "#f87171", sub: "invoices overdue" },
   ];
 
   const overdueInvoices = invoices.filter((i) => i.status === "Overdue" || i.status === "Outstanding");
   const renewalsDue = subscriptions.filter((s) => s.status === "Active").slice(0, 5);
-
   const recentInvoices = invoices.slice(0, 6);
 
-  const auditFeed = [
-    { msg: "Invoice run triggered — 412 invoices", time: "09:00", type: "human" },
-    { msg: "Nightly billing batch completed", time: "02:00", type: "auto" },
-    { msg: "Plan price updated: Growth ₹7,800→₹8,200", time: "Yesterday 16:22", type: "human" },
-    { msg: "Dunning email sent — 3rd attempt to Coastal Exports", time: "Yesterday 08:00", type: "auto" },
-    { msg: "Tax rate activated: IGST 18%", time: "28 Oct 11:05", type: "human" },
-  ];
+  // Build simple revenue bars from invoices (group by month if available, otherwise show flat)
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const now = new Date();
+  const chartData = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    const monthLabel = monthNames[d.getMonth()];
+    const monthInvoices = invoices.filter((inv) => {
+      const issued = new Date(inv.issuedAt);
+      return issued.getMonth() === d.getMonth() && issued.getFullYear() === d.getFullYear();
+    });
+    const billed = monthInvoices.reduce((s, inv) => s + parseAmount(inv.total), 0);
+    const collected = monthInvoices.filter((inv) => inv.status === "Paid").reduce((s, inv) => s + parseAmount(inv.total), 0);
+    return { month: monthLabel, billed, collected };
+  });
+  const maxBilled = Math.max(...chartData.map((d) => d.billed), 1);
 
-  const maxBilled = Math.max(...revenueChartData.map((d) => d.billed));
+  // Plan mix from subscriptions
+  const planCounts: Record<string, number> = {};
+  subscriptions.forEach((s) => {
+    planCounts[s.plan || "Unknown"] = (planCounts[s.plan || "Unknown"] || 0) + 1;
+  });
+  const planColors = ["#cca267", "#38bdf8", "#a78bfa", "#34d399", "#fb923c"];
+  const planMixData = Object.entries(planCounts).map(([name, count], i) => ({
+    name, count, color: planColors[i % planColors.length],
+  }));
+  const totalSubscribers = subscriptions.length;
 
   return (
     <div className="space-y-6">
@@ -107,31 +140,31 @@ export function DashboardTab({ invoices, subscriptions, quotations, onNavigate }
           </div>
 
           {/* Chart bars */}
-          <div className="flex items-end gap-3 h-32 mb-4">
-            {revenueChartData.map((d) => (
-              <div key={d.month} className="flex-1 flex flex-col items-center gap-1.5">
-                <div className="w-full flex gap-0.5 items-end" style={{ height: "100px" }}>
-                  <div
-                    className="flex-1 rounded-t-md"
-                    style={{ height: `${(d.billed / maxBilled) * 100}%`, background: "linear-gradient(to top, #cca267, #e8c88a)" }}
-                  />
-                  <div
-                    className="flex-1 rounded-t-md"
-                    style={{ height: `${(d.collected / maxBilled) * 100}%`, background: "linear-gradient(to top, #38bdf8, #7dd3fc)" }}
-                  />
+          {chartData.some((d) => d.billed > 0) ? (
+            <div className="flex items-end gap-3 h-32 mb-4">
+              {chartData.map((d) => (
+                <div key={d.month} className="flex-1 flex flex-col items-center gap-1.5">
+                  <div className="w-full flex gap-0.5 items-end" style={{ height: "100px" }}>
+                    <div className="flex-1 rounded-t-md" style={{ height: `${(d.billed / maxBilled) * 100}%`, background: "linear-gradient(to top, #cca267, #e8c88a)" }} />
+                    <div className="flex-1 rounded-t-md" style={{ height: `${(d.collected / maxBilled) * 100}%`, background: "linear-gradient(to top, #38bdf8, #7dd3fc)" }} />
+                  </div>
+                  <div className="text-[10px] text-[#78716c] font-medium">{d.month}</div>
                 </div>
-                <div className="text-[10px] text-[#78716c] font-medium">{d.month}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="h-32 flex items-center justify-center text-xs text-[#78716c]">
+              No invoice data yet. Create subscriptions and run billing to see revenue trends.
+            </div>
+          )}
 
           {/* Summary row */}
           <div className="grid grid-cols-4 gap-3 pt-4 border-t border-[#2d2520]">
             {[
-              { label: "Billed", value: "₹24,88,000", color: "text-[#cca267]" },
-              { label: "Collected", value: "₹22,14,800", color: "text-sky-400" },
-              { label: "Outstanding", value: "₹1,84,200", color: "text-amber-400" },
-              { label: "Avg Invoice", value: "₹9,840", color: "text-emerald-400" },
+              { label: "Billed", value: fmt(totalBilled), color: "text-[#cca267]" },
+              { label: "Collected", value: fmt(totalCollected), color: "text-sky-400" },
+              { label: "Outstanding", value: fmt(outstanding), color: "text-amber-400" },
+              { label: "Avg Invoice", value: fmt(avgInvoice), color: "text-emerald-400" },
             ].map((s) => (
               <div key={s.label}>
                 <div className={`text-sm font-extrabold ${s.color}`}>{s.value}</div>
@@ -150,50 +183,48 @@ export function DashboardTab({ invoices, subscriptions, quotations, onNavigate }
             </button>
           </div>
 
-          {/* Simple donut visual */}
-          <div className="relative flex items-center justify-center mb-4">
-            <svg viewBox="0 0 80 80" className="w-28 h-28 -rotate-90">
-              {(() => {
-                const total = planMixData.reduce((s, d) => s + d.count, 0);
-                let offset = 0;
-                const r = 30, cx = 40, cy = 40;
-                const circ = 2 * Math.PI * r;
-                return planMixData.map((d) => {
-                  const pct = d.count / total;
-                  const dash = pct * circ;
-                  const el = (
-                    <circle
-                      key={d.name}
-                      cx={cx} cy={cy} r={r}
-                      fill="none"
-                      stroke={d.color}
-                      strokeWidth="14"
-                      strokeDasharray={`${dash} ${circ}`}
-                      strokeDashoffset={-offset * circ}
-                    />
-                  );
-                  offset += pct;
-                  return el;
-                });
-              })()}
-            </svg>
-            <div className="absolute text-center">
-              <div className="text-lg font-extrabold text-white">4,502</div>
-              <div className="text-[9px] text-[#78716c]">subscribers</div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            {planMixData.map((d) => (
-              <div key={d.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
-                  <span className="text-[#a8a29e]">{d.name}</span>
+          {planMixData.length > 0 ? (
+            <>
+              <div className="relative flex items-center justify-center mb-4">
+                <svg viewBox="0 0 80 80" className="w-28 h-28 -rotate-90">
+                  {(() => {
+                    const total = planMixData.reduce((s, d) => s + d.count, 0) || 1;
+                    let offset = 0;
+                    const r = 30, cx = 40, cy = 40;
+                    const circ = 2 * Math.PI * r;
+                    return planMixData.map((d) => {
+                      const pct = d.count / total;
+                      const dash = pct * circ;
+                      const el = (
+                        <circle key={d.name} cx={cx} cy={cy} r={r} fill="none" stroke={d.color} strokeWidth="14" strokeDasharray={`${dash} ${circ}`} strokeDashoffset={-offset * circ} />
+                      );
+                      offset += pct;
+                      return el;
+                    });
+                  })()}
+                </svg>
+                <div className="absolute text-center">
+                  <div className="text-lg font-extrabold text-white">{totalSubscribers.toLocaleString()}</div>
+                  <div className="text-[9px] text-[#78716c]">subscribers</div>
                 </div>
-                <span className="font-bold text-white">{d.count.toLocaleString()}</span>
               </div>
-            ))}
-          </div>
+              <div className="space-y-2">
+                {planMixData.map((d) => (
+                  <div key={d.name} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
+                      <span className="text-[#a8a29e]">{d.name}</span>
+                    </div>
+                    <span className="font-bold text-white">{d.count.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="h-40 flex items-center justify-center text-xs text-[#78716c]">
+              No subscriptions yet.
+            </div>
+          )}
         </div>
       </div>
 
@@ -207,26 +238,30 @@ export function DashboardTab({ invoices, subscriptions, quotations, onNavigate }
               View all <ArrowUpRight className="h-3 w-3" />
             </button>
           </div>
-          <div className="divide-y divide-[#2d2520]">
-            {recentInvoices.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#28211b] transition-colors cursor-pointer">
-                <div>
-                  <div className="text-xs font-bold text-white">{inv.invoiceNumber}</div>
-                  <div className="text-[10px] text-[#78716c]">{inv.customer}</div>
+          {recentInvoices.length > 0 ? (
+            <div className="divide-y divide-[#2d2520]">
+              {recentInvoices.map((inv) => (
+                <div key={inv.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#28211b] transition-colors cursor-pointer">
+                  <div>
+                    <div className="text-xs font-bold text-white">{inv.invoiceNumber}</div>
+                    <div className="text-[10px] text-[#78716c]">{inv.customer}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-bold text-white">{inv.total}</div>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      inv.status === "Paid" ? "bg-emerald-500/15 text-emerald-400"
+                      : inv.status === "Overdue" ? "bg-rose-500/15 text-rose-400"
+                      : "bg-amber-500/15 text-amber-400"
+                    }`}>
+                      {inv.status}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs font-bold text-white">{inv.total}</div>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                    inv.status === "Paid" ? "bg-emerald-500/15 text-emerald-400"
-                    : inv.status === "Overdue" ? "bg-rose-500/15 text-rose-400"
-                    : "bg-amber-500/15 text-amber-400"
-                  }`}>
-                    {inv.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-5 py-8 text-center text-xs text-[#78716c]">No invoices yet. Run billing to generate invoices from active subscriptions.</div>
+          )}
         </div>
 
         {/* Renewals + Audit */}
@@ -237,17 +272,21 @@ export function DashboardTab({ invoices, subscriptions, quotations, onNavigate }
               <Calendar className="h-3.5 w-3.5 text-[#cca267]" />
               <div className="text-xs font-bold text-white">Renewals due in 7 days</div>
             </div>
-            <div className="divide-y divide-[#2d2520]">
-              {renewalsDue.map((s) => (
-                <div key={s.id} className="flex items-center justify-between px-5 py-2.5">
-                  <div>
-                    <div className="text-[11px] font-semibold text-white truncate max-w-[120px]">{s.customer}</div>
-                    <div className="text-[10px] text-[#78716c]">{s.plan}</div>
+            {renewalsDue.length > 0 ? (
+              <div className="divide-y divide-[#2d2520]">
+                {renewalsDue.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between px-5 py-2.5">
+                    <div>
+                      <div className="text-[11px] font-semibold text-white truncate max-w-[120px]">{s.customer}</div>
+                      <div className="text-[10px] text-[#78716c]">{s.plan}</div>
+                    </div>
+                    <div className="text-[10px] font-mono text-[#cca267]">{s.nextBilling}</div>
                   </div>
-                  <div className="text-[10px] font-mono text-[#cca267]">{s.nextBilling}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-5 py-6 text-center text-xs text-[#78716c]">No upcoming renewals.</div>
+            )}
           </div>
 
           {/* Audit feed */}
@@ -258,18 +297,8 @@ export function DashboardTab({ invoices, subscriptions, quotations, onNavigate }
                 All logs
               </button>
             </div>
-            <div className="divide-y divide-[#2d2520]">
-              {auditFeed.map((a, i) => (
-                <div key={i} className="px-5 py-2.5">
-                  <div className="flex items-start gap-2">
-                    <div className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${a.type === "auto" ? "bg-sky-400" : "bg-[#cca267]"}`} />
-                    <div>
-                      <div className="text-[10px] text-[#e8e4dc] leading-snug">{a.msg}</div>
-                      <div className="text-[9px] text-[#78716c] mt-0.5">{a.time}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="px-5 py-6 text-center text-xs text-[#78716c]">
+              Audit entries will appear here as you make changes.
             </div>
           </div>
         </div>
