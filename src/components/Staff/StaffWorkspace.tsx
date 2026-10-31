@@ -144,7 +144,7 @@ export function StaffWorkspace() {
   const overdueInvoicesCount = invoices.filter((i) => i.status === "Overdue").length;
 
   return (
-    <div className="min-h-screen bg-[#faf6f0] text-[#1c1917] flex flex-col md:flex-row antialiased selection:bg-[#cca267]/30 selection:text-[#1c1917]">
+    <div className="min-h-screen !bg-[#faf6f0] !text-[#1c1917] flex flex-col md:flex-row antialiased selection:bg-[#cca267]/30 selection:text-[#1c1917]" style={{backgroundColor: '#faf6f0', color: '#1c1917'}}>
       {/* Sidebar */}
       <StaffSidebar
         currentTab={currentTab}

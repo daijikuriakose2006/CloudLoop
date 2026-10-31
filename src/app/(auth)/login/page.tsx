@@ -64,6 +64,20 @@ function AuthPageContent() {
     setErrorMessage("");
   };
 
+  const getRoleRedirectPath = (role: RoleType): string => {
+    switch (role) {
+      case "Staff Account":
+        return "/app/staff";
+      case "Admin":
+        return "/dashboard";
+      case "Finance Lead":
+        return "/dashboard";
+      case "Customer":
+      default:
+        return "/dashboard";
+    }
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -90,11 +104,11 @@ function AuthPageContent() {
 
       setSuccessMessage(`Signed in as ${selectedRole}. Entering workspace...`);
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push(getRoleRedirectPath(selectedRole));
       }, 600);
     } catch (err) {
       console.warn("Login request note:", err);
-      router.push("/dashboard");
+      router.push(getRoleRedirectPath(selectedRole));
     } finally {
       setLoading(false);
     }
@@ -120,7 +134,7 @@ function AuthPageContent() {
       console.warn("Demo login note:", err);
     } finally {
       setLoading(false);
-      router.push("/dashboard");
+      router.push(getRoleRedirectPath(role));
     }
   };
 
