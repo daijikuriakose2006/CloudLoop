@@ -239,7 +239,6 @@ export function AdminWorkspace() {
     } else {
       showToast("Failed to create customer. Please try again.");
     }
-    }
   };
 
   const handleAddSubscription = async (data: {
