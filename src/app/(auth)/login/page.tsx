@@ -71,40 +71,57 @@ function AuthPageContent() {
     setSuccessMessage("");
 
     try {
-      // Attempt login via Supabase auth if configured
-      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        const { error } = await supabase.auth.signInWithPassword({
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           email: loginEmail,
           password: loginPassword,
-        });
+          role: selectedRole,
+        }),
+      });
 
-        if (error) {
-          // If Supabase credentials are fresh/unregistered, fallback to workspace routing
-          console.info("Supabase auth note:", error.message);
-        }
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.error || "Authentication failed.");
+        setLoading(false);
+        return;
       }
 
       setSuccessMessage(`Signed in as ${selectedRole}. Entering workspace...`);
       setTimeout(() => {
         router.push("/dashboard");
-      }, 700);
-    } catch {
+      }, 600);
+    } catch (err) {
+      console.warn("Login request note:", err);
       router.push("/dashboard");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleQuickDemoEntry = (role: RoleType) => {
+  const handleQuickDemoEntry = async (role: RoleType) => {
     setSelectedRole(role);
     setLoginEmail(defaultEmails[role]);
     setLoginPassword("Brightloop@1");
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: defaultEmails[role],
+          password: "Brightloop@1",
+          role,
+        }),
+      });
+    } catch (err) {
+      console.warn("Demo login note:", err);
+    } finally {
       setLoading(false);
       router.push("/dashboard");
-    }, 600);
+    }
   };
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
