@@ -1,0 +1,79 @@
+import {
+  FinanceInvoice,
+  FinancePayment,
+  FinanceTax,
+  FinanceDiscount,
+  FinanceRefund,
+  RevenueRecord,
+} from "./types";
+
+export const financeInvoices: FinanceInvoice[] = [
+  { id: "i1", invoiceNumber: "BL-2026-000479", customer: "Sunrise Textiles", plan: "Growth", amount: "₹6,949", tax: "₹1,251", total: "₹8,200", issuedAt: "2026-10-01", dueDate: "2026-10-15", status: "Paid" },
+  { id: "i2", invoiceNumber: "BL-2026-000478", customer: "Coastal Exports Ltd", plan: "Enterprise", amount: "₹15,678", tax: "₹2,822", total: "₹18,500", issuedAt: "2026-10-01", dueDate: "2026-10-15", status: "Overdue" },
+  { id: "i3", invoiceNumber: "BL-2026-000477", customer: "Delta Tech Solutions", plan: "Starter", amount: "₹2,966", tax: "₹534", total: "₹3,500", issuedAt: "2026-10-01", dueDate: "2026-10-15", status: "Paid" },
+  { id: "i4", invoiceNumber: "BL-2026-000476", customer: "Apex Logistics", plan: "Growth", amount: "₹6,949", tax: "₹1,251", total: "₹8,200", issuedAt: "2026-10-01", dueDate: "2026-10-15", status: "Outstanding" },
+  { id: "i5", invoiceNumber: "BL-2026-000475", customer: "Pinnacle Foods", plan: "Growth", amount: "₹6,949", tax: "₹1,251", total: "₹8,200", issuedAt: "2026-10-01", dueDate: "2026-10-15", status: "Paid" },
+  { id: "i6", invoiceNumber: "BL-2026-000474", customer: "Metro Analytics", plan: "Enterprise", amount: "₹15,678", tax: "₹2,822", total: "₹18,500", issuedAt: "2026-10-01", dueDate: "2026-10-15", status: "Paid" },
+  { id: "i7", invoiceNumber: "BL-2026-000473", customer: "Horizon Builders", plan: "Starter", amount: "₹2,966", tax: "₹534", total: "₹3,500", issuedAt: "2026-10-01", dueDate: "2026-10-15", status: "Outstanding" },
+  { id: "i8", invoiceNumber: "BL-2026-000472", customer: "Nexus Pharma", plan: "Growth", amount: "₹6,949", tax: "₹1,251", total: "₹8,200", issuedAt: "2026-10-01", dueDate: "2026-10-15", status: "Paid" },
+];
+
+export const financePayments: FinancePayment[] = [
+  { id: "p1", receiptNumber: "RCP-2026-000212", customer: "Sunrise Textiles", invoiceNumber: "BL-2026-000479", amount: "₹8,200", method: "UPI", reference: "UPI-STX-479-2610", paidAt: "2026-10-10", status: "Settled" },
+  { id: "p2", receiptNumber: "RCP-2026-000211", customer: "Delta Tech Solutions", invoiceNumber: "BL-2026-000477", amount: "₹3,500", method: "Card", reference: "CHG-DTS-477-2610", paidAt: "2026-10-10", status: "Settled" },
+  { id: "p3", receiptNumber: "RCP-2026-000210", customer: "Pinnacle Foods", invoiceNumber: "BL-2026-000475", amount: "₹8,200", method: "Bank Transfer", reference: "NEFT-PNF-475-2609", paidAt: "2026-10-09", status: "Settled" },
+  { id: "p4", receiptNumber: "RCP-2026-000209", customer: "Metro Analytics", invoiceNumber: "BL-2026-000474", amount: "₹18,500", method: "UPI", reference: "UPI-MTR-474-2609", paidAt: "2026-10-08", status: "Settled" },
+  { id: "p5", receiptNumber: "RCP-2026-000208", customer: "Nexus Pharma", invoiceNumber: "BL-2026-000472", amount: "₹8,200", method: "Card", reference: "CHG-NXP-472-2608", paidAt: "2026-10-07", status: "Settled" },
+  { id: "p6", receiptNumber: "RCP-2026-000207", customer: "Coastal Exports Ltd", invoiceNumber: "BL-2026-000463", amount: "₹18,500", method: "Manual", reference: "CHQ-CEL-463-2608", paidAt: "2026-09-28", status: "Pending" },
+];
+
+export const financeTaxes: FinanceTax[] = [
+  { id: "t1", name: "CGST 9%", scope: "Intra-state", rate: "9%", taxableValue: "₹9,28,600", collected: "₹83,574", invoiceCount: 112, status: "Active" },
+  { id: "t2", name: "SGST 9%", scope: "Intra-state", rate: "9%", taxableValue: "₹9,28,600", collected: "₹83,574", invoiceCount: 112, status: "Active" },
+  { id: "t3", name: "IGST 18%", scope: "Inter-state", rate: "18%", taxableValue: "₹6,80,000", collected: "₹1,22,400", invoiceCount: 84, status: "Active" },
+  { id: "t4", name: "Zero-rated", scope: "Exports", rate: "0%", taxableValue: "₹4,20,000", collected: "₹0", invoiceCount: 18, status: "Active" },
+];
+
+export const financeDiscounts: FinanceDiscount[] = [
+  { id: "d1", code: "ANNUAL20", description: "Annual subscription 20% off", type: "Percentage", value: "20%", usageCount: 142, totalSaved: "₹1,84,600", validUntil: "2026-12-31", status: "Active" },
+  { id: "d2", code: "STARTUP10", description: "Startup pack — 10% first 3 months", type: "Percentage", value: "10%", usageCount: 88, totalSaved: "₹62,400", validUntil: "2026-11-30", status: "Active" },
+  { id: "d3", code: "FLAT500", description: "₹500 off first invoice", type: "Fixed", value: "₹500", usageCount: 214, totalSaved: "₹1,07,000", validUntil: "2026-10-15", status: "Expired" },
+  { id: "d4", code: "REFERRAL15", description: "Referral reward 15% off", type: "Percentage", value: "15%", usageCount: 56, totalSaved: "₹48,200", validUntil: "2027-01-31", status: "Active" },
+];
+
+export const financeRefunds: FinanceRefund[] = [
+  { id: "r1", refundNumber: "REF-2026-000007", customer: "Coastal Exports Ltd", invoiceNumber: "BL-2026-000449", amount: "₹18,500", reason: "Duplicate invoice generated by billing run.", issuedAt: "2026-10-22", status: "Approved" },
+  { id: "r2", refundNumber: "REF-2026-000006", customer: "Horizon Builders", invoiceNumber: "BL-2026-000421", amount: "₹3,500", reason: "Customer cancelled within cooling-off period.", issuedAt: "2026-09-18", status: "Approved" },
+  { id: "r3", refundNumber: "REF-2026-000005", customer: "Delta Tech Solutions", invoiceNumber: "BL-2026-000401", amount: "₹8,200", reason: "Plan downgrade — prorated refund.", issuedAt: "2026-09-02", status: "Pending" },
+];
+
+export const revenueRecords: RevenueRecord[] = [
+  { period: "May 2026", billed: "₹4,88,000", collected: "₹4,56,000", outstanding: "₹32,000", collectionRate: "93.4%" },
+  { period: "Jun 2026", billed: "₹6,24,000", collected: "₹5,98,000", outstanding: "₹26,000", collectionRate: "95.8%" },
+  { period: "Jul 2026", billed: "₹9,36,000", collected: "₹8,72,000", outstanding: "₹64,000", collectionRate: "93.2%" },
+  { period: "Aug 2026", billed: "₹14,40,000", collected: "₹13,12,000", outstanding: "₹1,28,000", collectionRate: "91.1%" },
+  { period: "Sep 2026", billed: "₹19,48,000", collected: "₹18,04,000", outstanding: "₹1,44,000", collectionRate: "92.6%" },
+  { period: "Oct 2026", billed: "₹24,88,800", collected: "₹22,14,800", outstanding: "₹2,74,000", collectionRate: "89.0%" },
+];
+
+export const revenueChartData = [
+  { month: "May", billed: 488000, collected: 456000 },
+  { month: "Jun", billed: 624000, collected: 598000 },
+  { month: "Jul", billed: 936000, collected: 872000 },
+  { month: "Aug", billed: 1440000, collected: 1312000 },
+  { month: "Sep", billed: 1948000, collected: 1804000 },
+  { month: "Oct", billed: 2488800, collected: 2214800 },
+];
+
+export const ageingBuckets = [
+  { label: "0–30 days", amount: "₹1,84,200", count: 34, pct: 65, color: "#34d399" },
+  { label: "31–60 days", amount: "₹56,800", count: 12, pct: 28, color: "#fbbf24" },
+  { label: "61–90 days", amount: "₹32,100", count: 8, pct: 16, color: "#fb923c" },
+  { label: "90+ days", amount: "₹18,400", count: 4, pct: 9, color: "#f87171" },
+];
+
+export const planMixData = [
+  { name: "Starter", count: 820, color: "#38bdf8" },
+  { name: "Growth", count: 3240, color: "#cca267" },
+  { name: "Enterprise", count: 442, color: "#a78bfa" },
+];
